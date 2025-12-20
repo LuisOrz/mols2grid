@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2025/12/20
+
+Marimo compatibility contributed by @N283T (PR #73)
+
+### Added
+
+- Support for Marimo notebooks.
+- `MolGrid.get_marimo_selection` for syncing the mols2grid selection state with other
+  Marimo cells. See `scripts/marimo_example.py` for an example.
+
+---
+
 ## [2.1.0] - 2025/11/15
 
 Minor update to follow the latest practices for interactive widgets.
