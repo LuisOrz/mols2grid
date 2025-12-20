@@ -1,3 +1,4 @@
+import ast
 import json
 import warnings
 from base64 import b64encode
@@ -14,6 +15,7 @@ from mols2grid.select import register
 from mols2grid.utils import (
     callback_handler,
     env,
+    is_running_within_marimo,
     is_running_within_streamlit,
     mol_to_record,
     mol_to_smiles,
@@ -205,7 +207,8 @@ class MolGrid:
         widget.observe(selection_handler, names=["selection"])
 
         # Register widget JS-side.
-        display(widget)
+        if not is_running_within_marimo():
+            display(widget)
         self.widget = widget
 
     @classmethod
@@ -679,10 +682,10 @@ class MolGrid:
         # Generate cell HTML.
         item = (
             '<div class="m2g-cell" data-mols2grid-id="0" tabindex="0">'
-            '<div class="m2g-cb-wrap">{checkbox_html}<div class="m2g-cb"></div>'
-            "{id_display_html}</div>"
-            '<div class="m2g-cell-actions">{info_btn_html}{callback_btn_html}</div>'
-            "{content}"
+            '<div class="m2g-cb-wrap">{checkbox_html}<div class="m2g-cb"></div>'  # noqa: RUF027
+            "{id_display_html}</div>"  # noqa: RUF027
+            '<div class="m2g-cell-actions">{info_btn_html}{callback_btn_html}</div>'  # noqa: RUF027
+            "{content}"  # noqa: RUF027
             "{tooltip_html}"
             "</div>"
         )
@@ -799,6 +802,36 @@ class MolGrid:
         return self.dataframe.loc[self.dataframe["mols2grid-id"].isin(sel)].drop(
             columns=self._extra_columns
         )
+
+    def get_marimo_selection(self):
+        """Returns a marimo state object containing the list of selected indices.
+        Only available when running in marimo.
+
+        Returns
+        -------
+        getter
+            A getter function for the selection state.
+            Calling it with no arguments returns the current list of selected IDs.
+        """
+        if not is_running_within_marimo():
+            raise RuntimeError("This method is only available in a marimo notebook.")
+
+        import marimo as mo
+
+        get_state, set_state = mo.state([])
+
+        def _on_change(change):
+            try:
+                sel = ast.literal_eval(change["new"])
+                set_state(list(sel.keys()))
+            except (ValueError, SyntaxError):
+                pass
+
+        if not getattr(self.widget, "_marimo_hooked", False):
+            self.widget.observe(_on_change, names=["selection"])
+            self.widget._marimo_hooked = True
+
+        return get_state
 
     def filter(self, mask):
         """Filters the grid using a mask (boolean array).
@@ -1073,8 +1106,13 @@ class MolGrid:
         -------
         view : IPython.core.display.HTML
         """
+        requires_marimo = is_running_within_marimo()
+        if requires_marimo:
+            use_iframe = True
+
         use_iframe = is_jupyter or use_iframe
         doc = self.render(**kwargs, use_iframe=use_iframe)
+
         if use_iframe:
             # Render HTML in iframe.
             iframe = env.get_template("html/iframe.html").render(
@@ -1084,6 +1122,10 @@ class MolGrid:
                 sandbox=iframe_sandbox,
                 doc=escape(doc),
             )
+            if requires_marimo:
+                import marimo as mo
+
+                return mo.vstack([self.widget, mo.Html(iframe)])
             return HTML(iframe)
         # Render HTML regularly.
         return HTML(doc)
