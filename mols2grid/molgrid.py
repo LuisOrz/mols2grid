@@ -363,7 +363,7 @@ class MolGrid:
         fontsize="12px",
         fontfamily="'DejaVu', sans-serif",
         textalign="center",
-        background_color="AliceBlue",
+        background_color="#F0F8FF",
         hover_color="rgba(0,0,0,0.05)",
         custom_css=None,
         style=None,
@@ -445,7 +445,7 @@ class MolGrid:
             Font used for the text in each cell.
         textalign : str, default="center"
             Alignment of the text in each cell.
-        background_color : str, default="AliceBlue"
+        background_color : str, default="#F0F8FF"
             Background color of a cell.
         hover_color : str, default="rgba(0,0,0,0.05)"
             Background color when hovering a cell.
