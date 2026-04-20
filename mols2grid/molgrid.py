@@ -363,7 +363,7 @@ class MolGrid:
         fontsize="12px",
         fontfamily="'DejaVu', sans-serif",
         textalign="center",
-        background_color= "white",
+        background_color= "F0FFF8",
         hover_color="rgba(0,0,0,0.05)",
         custom_css=None,
         style=None,
